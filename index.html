@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCIENTRIX MAP — vΩ Life-Detection Engine</title>
+<title>OMNISCIENTRIX MAP vΩ.2 — Life-Detection Engine</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -73,9 +73,9 @@ html, body {
 
 <!-- ====================== UI PANEL ======================= -->
 <div id="ui">
-  <h1>OMNISCIENTRIX MAP</h1>
+  <h1>OMNISCIENTRIX MAP vΩ.2</h1>
   <h2>Life-Finder Controls</h2>
-  <p><b>Click glowing planet-nodes</b> to inspect scientific life metrics.</p>
+  <p><b>Scroll to zoom</b>, <b>drag to pan</b>, click planets to inspect.</p>
 
   <h2>Selected Planet:</h2>
   <div id="planet-info">No planet selected.</div>
@@ -92,8 +92,8 @@ html, body {
 
 <script>
 /* ============================================================
-   OMNISCIENTRIX MAP — vΩ Procedural Life-Detection Engine
-   25,000 Stars + 500 Planets + Colour-Corrected Cosmic Scheme
+   OMNISCIENTRIX MAP — vΩ.2 Advanced Life-Detection Engine
+   25,000 Stars + 500 Planets + GHZ + Life Probability
    ============================================================ */
 
 /* ===== Canvas Setup ===== */
@@ -107,20 +107,59 @@ function resize() {
 resize();
 window.onresize = resize;
 
-/* ===== STARFIELD GENERATION ===== */
+/* ===== Camera Controls ===== */
+let cam = {x:0, y:0, zoom:1, dragging:false, lastX:0, lastY:0};
+
+/* Drag to Pan */
+canvas.addEventListener("mousedown", e => {
+  cam.dragging = true;
+  cam.lastX = e.clientX;
+  cam.lastY = e.clientY;
+});
+canvas.addEventListener("mouseup", ()=> cam.dragging=false);
+canvas.addEventListener("mouseleave", ()=> cam.dragging=false);
+
+canvas.addEventListener("mousemove", e => {
+  if (cam.dragging) {
+    cam.x += (e.clientX - cam.lastX) / cam.zoom;
+    cam.y += (e.clientY - cam.lastY) / cam.zoom;
+    cam.lastX = e.clientX;
+    cam.lastY = e.clientY;
+  }
+});
+
+/* Scroll to Zoom */
+canvas.addEventListener("wheel", e => {
+  const delta = -e.deltaY * 0.0015;
+  cam.zoom = Math.min(3, Math.max(0.2, cam.zoom + delta));
+});
+
+/* ===== Background Nebula Layer ===== */
+function drawNebula() {
+  let g = ctx.createRadialGradient(
+    canvas.width/2, canvas.height/2, 50,
+    canvas.width/2, canvas.height/2, canvas.width
+  );
+  g.addColorStop(0, "rgba(0,50,120,0.35)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+/* ===== Create 25,000 Stars ===== */
 const STAR_COUNT = 25000;
 let stars = [];
 
 for (let i = 0; i < STAR_COUNT; i++) {
   stars.push({
-    x: (Math.random() - 0.5) * 7000,
-    y: (Math.random() - 0.5) * 7000,
-    z: Math.random() * 6000 + 300,
-    b: 0.3 + Math.random() * 0.7
+    x: (Math.random()-0.5)*8000,
+    y: (Math.random()-0.5)*8000,
+    z: Math.random()*6000 + 300,
+    b: 0.25 + Math.random()*0.75
   });
 }
 
-/* ===== GALACTIC HABITABLE ZONE (GHZ) COLOURING ===== */
+/* ===== GHZ Overlay ===== */
 function ghzWeight(x, y) {
   const r = Math.sqrt(x*x + y*y);
   const inner = 2500, outer = 5500;
@@ -128,25 +167,23 @@ function ghzWeight(x, y) {
   return 1 - Math.abs((r - ((inner+outer)/2)) / 1500);
 }
 
-/* ===== PROCEDURAL EXOPLANETS ===== */
+/* ===== Procedural Planets ===== */
 const PLANET_COUNT = 500;
 let planets = [];
 
 for (let i = 0; i < PLANET_COUNT; i++) {
-  const s = stars[Math.floor(Math.random() * stars.length)];
+  const s = stars[Math.floor(Math.random()*stars.length)];
+  const orbital = 10 + Math.random()*120;
 
-  const radius = 0.5 + Math.random() * 2.5;
-  const temp   = 150 + Math.random() * 400;
-  const flux   = 0.1 + Math.random() * 2.5;
+  let radius = 0.5 + Math.random()*2.5;
+  let temp   = 150 + Math.random()*400;
+  let flux   = 0.1 + Math.random()*2.5;
+  let water  = Math.random();
+  let atmo   = Math.random();
 
-  const water = Math.random();
-  const atmo  = Math.random();
-
-  const o2  = Math.random() * 0.21;
-  const ch4 = Math.random() * 0.02;
-  const co2 = Math.random() * 0.10;
-
-  const orbital = 10 + Math.random() * 80;
+  let o2  = Math.random()*0.21;
+  let ch4 = Math.random()*0.02;
+  let co2 = Math.random()*0.10;
 
   planets.push({
     name: "PX-" + (1000+i),
@@ -157,101 +194,101 @@ for (let i = 0; i < PLANET_COUNT; i++) {
     radius, temp, flux, water, atmo,
     o2, ch4, co2,
 
-    esi: 0, iels:0, life:0,
+    esi:0, iels:0, life:0,
+    angle: Math.random()*Math.PI*2,
+    dist: orbital,
     screen:{x:0,y:0}
   });
 }
 
-/* ===== EARTH SIMILARITY INDEX ===== */
+/* ===== ESI ===== */
 function computeESI(p) {
   const r = Math.abs((p.radius - 1)/(p.radius + 1));
   const t = Math.abs((p.temp - 288)/(p.temp + 288));
   return 1 - (r*0.5 + t*0.5);
 }
 
-/* ===== IELS — Informational Earth-Likeness Score ===== */
+/* ===== IELS ===== */
 function computeIELS(p) {
   const tempTerm  = Math.exp(-Math.abs(p.temp - 288)/90);
   const waterTerm = p.water;
   const atmoTerm  = p.atmo;
   const fluxTerm  = Math.exp(-Math.abs(p.flux - 1)/1.2);
-  return (tempTerm*0.35 + waterTerm*0.35 + atmoTerm*0.15 + fluxTerm*0.15);
+  return tempTerm*0.35 + waterTerm*0.35 + atmoTerm*0.15 + fluxTerm*0.15;
 }
 
-/* ===== LIFE PROBABILITY ===== */
+/* ===== Life Probability ===== */
 function computeLife(p) {
-  const biosig = (p.o2*p.ch4) > 0.0004 ? 1 : 0;
+  const biosig = (p.o2*p.ch4)>0.0004 ? 1:0;
   return p.iels*0.55 + p.esi*0.35 + biosig*0.10;
 }
 
-/* Compute All Scores */
+/* ===== Compute All Scores ===== */
 for (let p of planets) {
   p.esi  = computeESI(p);
   p.iels = computeIELS(p);
   p.life = computeLife(p);
 }
 
-/* ===== CAMERA MOVEMENT ===== */
-let cam = {x:0,y:0};
-document.addEventListener("mousemove", e => {
-  cam.x = (e.clientX/window.innerWidth - 0.5)*300;
-  cam.y = (e.clientY/window.innerHeight - 0.5)*300;
-});
-
-/* ===== RENDER LOOP ===== */
+/* ===== Animation Loop ===== */
 function render() {
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle="#000"; 
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  /* --- Draw Stars (colour-corrected) --- */
+  drawNebula();
+
+  /* --- Stars --- */
   for (let s of stars) {
     const d = s.z/6000;
-
-    const x = canvas.width/2  + (s.x/d) + cam.x*0.4;
-    const y = canvas.height/2 + (s.y/d) + cam.y*0.4;
+    const x = canvas.width/2 + (s.x - cam.x)*cam.zoom/d;
+    const y = canvas.height/2 + (s.y - cam.y)*cam.zoom/d;
 
     const ghz = ghzWeight(s.x, s.y);
-    const c = Math.min(1, s.b + ghz*0.25);
+    const c = Math.min(1, s.b + ghz*0.35);
 
-    ctx.fillStyle = `rgba(0, ${80 + c*120}, ${150 + c*80}, ${0.2 + s.b*0.8})`;
-    ctx.fillRect(x, y, 1.5, 1.5);
+    ctx.fillStyle = `rgba(0, ${90 + c*140}, ${170 + c*70}, ${0.15 + s.b*0.85})`;
+    ctx.fillRect(x, y, 1.4, 1.4);
+  }
+
+  /* --- Planet Orbit Motion --- */
+  for (let p of planets) {
+    p.angle += 0.0004;
+    p.x += Math.cos(p.angle)*0.15;
+    p.y += Math.sin(p.angle)*0.15;
   }
 
   /* --- Draw Planets --- */
   for (let p of planets) {
     const d = p.z/6000;
-
-    const x = canvas.width/2  + (p.x/d) + cam.x*0.4;
-    const y = canvas.height/2 + (p.y/d) + cam.y*0.4;
+    const x = canvas.width/2 + (p.x - cam.x)*cam.zoom/d;
+    const y = canvas.height/2 + (p.y - cam.y)*cam.zoom/d;
 
     const L = Math.min(1, p.life);
-
     ctx.beginPath();
-    ctx.fillStyle = `rgb(${(1-L)*0}, ${140 + L*115}, ${255})`;
+    ctx.fillStyle = `rgb(${(1-L)*0}, ${150 + L*105}, 255)`;  
     ctx.arc(x, y, 3 + L*4, 0, Math.PI*2);
     ctx.fill();
 
-    p.screen.x = x;
-    p.screen.y = y;
+    p.screen.x=x; p.screen.y=y;
   }
 
   requestAnimationFrame(render);
 }
 render();
 
-/* ===== CLICK TO INSPECT ===== */
+/* ===== Click Detection ===== */
 canvas.addEventListener("click", e=>{
   for (let p of planets) {
-    if (Math.hypot(e.clientX-p.screen.x, e.clientY-p.screen.y) < 10) {
+    if (Math.hypot(e.clientX-p.screen.x, e.clientY-p.screen.y)<10) {
       document.getElementById("planet-info").innerHTML = `
-        <b>${p.name}</b><br>
-        Radius: ${(p.radius).toFixed(2)} R⊕<br>
-        Temp: ${p.temp.toFixed(0)} K<br>
-        ESI: ${(p.esi*100).toFixed(1)}%<br>
+        <b>${p.name}</b><br><br>
+        Radius: ${p.radius.toFixed(2)} R⊕<br>
+        Temperature: ${p.temp.toFixed(0)} K<br><br>
+        Earth Similarity (ESI): ${(p.esi*100).toFixed(1)}%<br>
         IELS: ${(p.iels*100).toFixed(1)}%<br>
         Life Probability: ${(p.life*100).toFixed(1)}%<br><br>
         Water Probability: ${(p.water*100).toFixed(1)}%<br>
-        Atmosphere: ${(p.atmo*100).toFixed(1)}%<br><br>
+        Atmosphere Strength: ${(p.atmo*100).toFixed(1)}%<br><br>
         O₂: ${(p.o2*100).toFixed(2)}%<br>
         CH₄: ${(p.ch4*100).toFixed(2)}%<br>
         CO₂: ${(p.co2*100).toFixed(2)}%<br>
