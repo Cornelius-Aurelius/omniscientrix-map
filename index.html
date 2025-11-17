@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-/* === GLOBAL STYLE === */
 html, body {
   margin: 0; padding: 0;
   overflow: hidden;
@@ -15,7 +14,7 @@ html, body {
   color: #00aaff;
 }
 
-/* === UI PANEL === */
+/* UI PANEL */
 #ui {
   position: fixed;
   top: 10px; left: 10px;
@@ -27,18 +26,11 @@ html, body {
   backdrop-filter: blur(6px);
 }
 
-#ui h1 {
-  font-size: 20px; margin: 0 0 10px 0;
-  color: #00caff;
-}
+#ui h1 { font-size: 20px; margin: 0 0 10px 0; color: #00caff; }
+#ui h2 { font-size: 14px; margin: 10px 0 3px 0; color: #00d0ff; }
+#ui p  { font-size: 12px; }
 
-#ui h2 {
-  font-size: 14px; margin: 10px 0 3px 0;
-  color: #00d0ff;
-}
-
-#ui p { font-size: 12px; margin: 3px 0; }
-
+/* SECTION BOX */
 #planet-info {
   margin-top: 10px;
   padding: 10px;
@@ -46,14 +38,14 @@ html, body {
   border-radius: 6px;
 }
 
-/* === FOOTER === */
+/* FOOTER */
 #footer {
   position: fixed;
-  bottom: 10px; left: 50%;
-  transform: translateX(-50%);
+  bottom: 10px;
+  left: 50%; transform: translateX(-50%);
   font-size: 12px;
-  color: #0099ff;
   opacity: 0.7;
+  color: #0099ff;
 }
 </style>
 </head>
@@ -63,228 +55,182 @@ html, body {
 <div id="ui">
   <h1>OMNISCIENTRIX MAP</h1>
   <h2>Life-Finder Controls</h2>
-
   <p><b>Click any glowing planet-node</b> to inspect life probability.</p>
 
   <h2>Current Selection:</h2>
-  <div id="planet-info">
-    <p>No planet selected.</p>
-  </div>
+  <div id="planet-info">No planet selected.</div>
 </div>
 
 <canvas id="universe"></canvas>
 
-<div id="footer">
-  © 2025 Cornelius Aurelius · <a href="#" style="color:#00aaff;">The Peace License</a>
-</div>
+<div id="footer">© 2025 Cornelius Aurelius · <a style="color:#00aaff;">The Peace License</a></div>
 
 <script>
-/* ============================================================
-   OMNISCIENTRIX MAP vΩ — Single-File Universe Engine
-   Complete procedural galaxy + habitability scoring built-in
-   ============================================================ */
-
-/* === Canvas Setup === */
+/* -----------------------------------------------------------
+   FIXED RENDER ENGINE — GUARANTEED TO WORK ON ALL BROWSERS
+----------------------------------------------------------- */
 const canvas = document.getElementById("universe");
-const ctx = canvas.getContext("webgl2", { antialias: true });
+const ctx = canvas.getContext("2d"); // <-- guaranteed everywhere
 
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
-resize(); window.onresize = resize;
+resize();
+window.onresize = resize;
 
-/* ============================================================
-   PROCEDURAL GALAXY GENERATOR
-   Creates ~8,000 procedural stars + ~300 procedural exoplanets
-   ============================================================ */
-
-const STAR_COUNT = 8000;
-const PLANET_COUNT = 300;
+/* -----------------------------------------------------------
+   PROCEDURAL GALAXY + EXOPLANET GENERATION
+----------------------------------------------------------- */
+const STAR_COUNT = 6000;
+const PLANET_COUNT = 250;
 
 let stars = [];
 let planets = [];
 
-/* === Create Stars === */
+// Generate Stars
 for (let i = 0; i < STAR_COUNT; i++) {
   stars.push({
-    x: (Math.random() - 0.5) * 5000,
-    y: (Math.random() - 0.5) * 5000,
-    z: (Math.random() - 0.5) * 5000,
-    brightness: Math.random()
+    x: (Math.random() - 0.5) * 4000,
+    y: (Math.random() - 0.5) * 4000,
+    z: Math.random() * 3000 + 100,
+    b: Math.random()
   });
 }
 
-/* === Create Procedural Exoplanets === */
+// Generate Exoplanets
 for (let i = 0; i < PLANET_COUNT; i++) {
-
-  // Position planets near one of the stars
-  const host = stars[Math.floor(Math.random() * STAR_COUNT)];
-
-  // Random orbital distance
-  const dist = 5 + Math.random() * 50;
+  const s = stars[Math.floor(Math.random() * stars.length)];
+  const dist = 20 + Math.random() * 80;
 
   planets.push({
-    name: `PX-${1000 + i}`,
-    x: host.x + (Math.random() - 0.5) * dist,
-    y: host.y + (Math.random() - 0.5) * dist,
-    z: host.z + (Math.random() - 0.5) * dist,
+    name: "PX-" + (1000 + i),
 
-    // Realistic astrophysics values
-    radius: 0.5 + Math.random() * 2.5,          // Earth radii
-    temp: 150 + Math.random() * 400,            // Kelvin
-    flux: 0.1 + Math.random() * 2.5,            // Insolation
-    water: Math.random(),                       // Probability
-    atmosphere: Math.random(),                  // Strength
-    ch4: Math.random() * 0.02,                  // Methane %
-    o2: Math.random() * 0.21,                   // Oxygen %
-    co2: Math.random() * 0.10,                  // CO2 %
-    haze: Math.random(),
+    x: s.x + (Math.random() - 0.5) * dist,
+    y: s.y + (Math.random() - 0.5) * dist,
+    z: s.z + (Math.random() - 0.5) * dist,
 
-    // Will be computed later
+    radius: 0.5 + Math.random() * 2.5,
+    temp: 150 + Math.random() * 400,
+    flux: 0.1 + Math.random() * 2.5,
+    water: Math.random(),
+    atmosphere: Math.random(),
+
+    o2: Math.random() * 0.21,
+    ch4: Math.random() * 0.02,
+    co2: Math.random() * 0.10,
+
+    esi: 0,
     iels: 0,
     lifeScore: 0,
-    esi: 0
+    screen: {x:0,y:0}
   });
 }
 
-/* ============================================================
+/* -----------------------------------------------------------
    EARTH SIMILARITY INDEX (ESI)
-   ============================================================ */
+----------------------------------------------------------- */
 function computeESI(p) {
   const r = Math.abs((p.radius - 1) / (p.radius + 1));
   const t = Math.abs((p.temp - 288) / (p.temp + 288));
   return 1 - (r * 0.5 + t * 0.5);
 }
 
-/* ============================================================
-   HABITABILITY: Informational Earth-Likeness Score (IELS)
-   (Simplified but scientifically valid structure)
-   ============================================================ */
+/* -----------------------------------------------------------
+   INFORM. EARTH-LIKENESS SCORE (IELS)
+----------------------------------------------------------- */
 function computeIELS(p) {
-  let tempTerm = Math.exp(-Math.abs(p.temp - 288) / 80);
-  let waterTerm = p.water;
-  let atmoTerm = p.atmosphere;
-  let fluxTerm = Math.exp(-Math.abs(p.flux - 1));
-
-  return (tempTerm * 0.35 + waterTerm * 0.35 +
-          atmoTerm * 0.15 + fluxTerm * 0.15);
+  const tempTerm = Math.exp(-Math.abs(p.temp - 288) / 80);
+  const waterTerm = p.water;
+  const atmoTerm = p.atmosphere;
+  const fluxTerm = Math.exp(-Math.abs(p.flux - 1));
+  return tempTerm * 0.35 + waterTerm * 0.35 + atmoTerm * 0.15 + fluxTerm * 0.15;
 }
 
-/* ============================================================
-   LIFE PROBABILITY: PLife (Composite)
-   Using atmospheric disequilibrium + IELS + ESI
-   ============================================================ */
-function computeLife(p) {
-  const diseq = Math.abs(p.o2 * p.ch4) > 0.001 ? 1 : 0; // Biosignature flag
-
-  return (
-    p.iels * 0.6 +
-    p.esi * 0.3 +
-    diseq * 0.1
-  );
+/* -----------------------------------------------------------
+   LIFE SCORE = IELS + ESI + BIOSIGNATURES
+----------------------------------------------------------- */
+function computeLifeScore(p) {
+  const biosig = (p.o2 * p.ch4) > 0.0005 ? 1 : 0;
+  return (p.iels * 0.6) + (p.esi * 0.3) + (biosig * 0.1);
 }
 
-/* ============================================================
-   COMPUTE ALL SCORES
-   ============================================================ */
-for (let p of planets) {
+/* Compute scores */
+planets.forEach(p => {
   p.esi = computeESI(p);
   p.iels = computeIELS(p);
-  p.lifeScore = computeLife(p);
-}
-
-/* ============================================================
-   SIMPLE 3D CAMERA  
-   ============================================================ */
-let cam = { x: 0, y: 0, z: -600, rx: 0, ry: 0 };
-
-document.addEventListener("mousemove", e => {
-  cam.ry = (e.clientX / window.innerWidth - 0.5) * 2;
-  cam.rx = (e.clientY / window.innerHeight - 0.5) * 2;
+  p.lifeScore = computeLifeScore(p);
 });
 
-/* ============================================================
-   RENDER LOOP (2D projection)
-   ============================================================ */
-const gl = canvas.getContext("2d");
+/* -----------------------------------------------------------
+   CAMERA CONTROLS
+----------------------------------------------------------- */
+let cam = { x:0, y:0 };
+document.addEventListener("mousemove", e => {
+  cam.x = (e.clientX / window.innerWidth - 0.5) * 200;
+  cam.y = (e.clientY / window.innerHeight - 0.5) * 200;
+});
 
+/* -----------------------------------------------------------
+   RENDER LOOP
+----------------------------------------------------------- */
 function render() {
-  gl.fillStyle = "black";
-  gl.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
   // Draw stars
   for (let s of stars) {
-    const sx = (s.x - cam.x);
-    const sy = (s.y - cam.y);
-    const sz = (s.z - cam.z);
+    const depth = s.z / 3000;
+    const x = canvas.width/2 + s.x / depth + cam.x * 0.5;
+    const y = canvas.height/2 + s.y / depth + cam.y * 0.5;
 
-    const scale = 300 / (sz + 500);
-
-    const x2d = sx * scale + canvas.width / 2;
-    const y2d = sy * scale + canvas.height / 2;
-
-    gl.fillStyle = `rgba(0,150,255,${s.brightness})`;
-    gl.fillRect(x2d, y2d, 2,2);
+    ctx.fillStyle = `rgba(0,150,255,${0.2 + s.b * 0.8})`;
+    ctx.fillRect(x, y, 1.5, 1.5);
   }
 
   // Draw planets
   for (let p of planets) {
-    const sx = (p.x - cam.x);
-    const sy = (p.y - cam.y);
-    const sz = (p.z - cam.z);
-
-    const scale = 400 / (sz + 500);
-
-    const x2d = sx * scale + canvas.width / 2;
-    const y2d = sy * scale + canvas.height / 2;
+    const depth = p.z / 3000;
+    const x = canvas.width/2 + p.x / depth + cam.x * 0.5;
+    const y = canvas.height/2 + p.y / depth + cam.y * 0.5;
 
     const c = Math.min(1, p.lifeScore);
+    ctx.fillStyle = `rgba(${(1-c)*0},${c*255},255,1)`;
 
-    gl.fillStyle = `rgba(${(1-c)*0},${c*255},255,1)`;
+    ctx.beginPath();
+    ctx.arc(x, y, 3 + c * 3, 0, Math.PI * 2);
+    ctx.fill();
 
-    gl.beginPath();
-    gl.arc(x2d, y2d, 3 + c*3, 0, Math.PI*2);
-    gl.fill();
-
-    // Click detection
-    p.screen = {x: x2d, y: y2d};
+    p.screen.x = x; p.screen.y = y;
   }
 
   requestAnimationFrame(render);
 }
 render();
 
-/* ============================================================
-   CLICK → Inspect Planet
-   ============================================================ */
+/* -----------------------------------------------------------
+   CLICK SELECTION
+----------------------------------------------------------- */
 canvas.addEventListener("click", e => {
-  const mx = e.clientX, my = e.clientY;
-
   for (let p of planets) {
-    if (!p.screen) continue;
-    if (Math.hypot(mx - p.screen.x, my - p.screen.y) < 8) {
-      showPlanet(p);
+    if (Math.hypot(e.clientX - p.screen.x, e.clientY - p.screen.y) < 8) {
+      document.getElementById("planet-info").innerHTML = `
+        <b>${p.name}</b><br>
+        Radius: ${p.radius.toFixed(2)} R⊕<br>
+        Temp: ${p.temp.toFixed(0)} K<br>
+        ESI: ${(p.esi*100).toFixed(1)}%<br>
+        IELS: ${(p.iels*100).toFixed(1)}%<br>
+        Life Score: ${(p.lifeScore*100).toFixed(1)}%<br>
+        Water Probability: ${(p.water*100).toFixed(1)}%<br>
+        Atmosphere: ${(p.atmosphere*100).toFixed(1)}%<br>
+        O₂: ${(p.o2*100).toFixed(2)}%<br>
+        CH₄: ${(p.ch4*100).toFixed(2)}%<br>
+        CO₂: ${(p.co2*100).toFixed(2)}%
+      `;
       break;
     }
   }
 });
-
-function showPlanet(p) {
-  document.getElementById("planet-info").innerHTML = `
-    <b>${p.name}</b><br>
-    Radius: ${p.radius.toFixed(2)} R⊕<br>
-    Temp: ${p.temp.toFixed(0)} K<br>
-    ESI: ${(p.esi*100).toFixed(1)}%<br>
-    IELS: ${(p.iels*100).toFixed(1)}%<br>
-    Life Score: ${(p.lifeScore*100).toFixed(1)}%<br>
-    Water Probability: ${(p.water*100).toFixed(1)}%<br>
-    Atmosphere Strength: ${(p.atmosphere*100).toFixed(1)}%<br>
-    O₂: ${(p.o2*100).toFixed(2)}%<br>
-    CH₄: ${(p.ch4*100).toFixed(2)}%<br>
-    CO₂: ${(p.co2*100).toFixed(2)}%
-  `;
-}
 </script>
 
 </body>
