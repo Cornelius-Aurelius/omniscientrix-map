@@ -2,36 +2,37 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCIENTRIX MAP vΩ.4 — Galactic Life Detection System</title>
+<title>OMNISCIENTRIX MAP vΩ.5 — Life Detection Galaxy Engine</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
+/* ===== GLOBAL ===== */
 html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: black;
+  background: #000;
   font-family: Arial, sans-serif;
+  color: #aef2ff;
   user-select: none;
 }
 
-/* UI PANEL */
+/* ===== PANEL ===== */
 #panel {
   position: fixed;
-  top: 12px;
-  left: 12px;
+  top: 15px;
+  left: 15px;
   width: 300px;
-  padding: 15px;
-  border-radius: 12px;
-  border: 1px solid #00baff55;
   background: rgba(0,0,0,0.55);
+  border: 1px solid #00baff55;
+  padding: 14px;
+  border-radius: 12px;
   backdrop-filter: blur(8px);
-  color: #aef2ff;
 }
 
 #panel h1 {
-  margin: 0 0 10px 0;
   font-size: 22px;
+  margin: 0 0 10px 0;
   color: #00d4ff;
   text-shadow: 0 0 6px #007799;
 }
@@ -39,15 +40,14 @@ html, body {
 #panel select {
   width: 100%;
   padding: 6px;
-  margin: 6px 0 10px 0;
-  border: 1px solid #00d4ff55;
+  margin-bottom: 12px;
   background: #002a33;
-  color: #b7f2ff;
+  border: 1px solid #00d4ff55;
   border-radius: 6px;
-  font-size: 12px;
+  color: #b9f2ff;
 }
 
-/* Planet info */
+/* ===== INFO BOX ===== */
 #info {
   margin-top: 10px;
   padding: 10px;
@@ -58,30 +58,30 @@ html, body {
   color: #c9f8ff;
 }
 
-/* Footer */
+/* FOOTER */
 #footer {
   position: fixed;
   bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 50%; transform: translateX(-50%);
   color: #00aaff;
   font-size: 12px;
 }
-#footer a { color: #00cfff; text-decoration: none; }
+#footer a { color:#00d4ff; text-decoration:none; }
+
 </style>
 </head>
 
 <body>
 
 <div id="panel">
-  <h1>OMNISCIENTRIX MAP vΩ.4</h1>
-  
+  <h1>OMNISCIENTRIX MAP vΩ.5</h1>
+
   <select id="modeSelect">
     <option value="life">Life Probability Mode</option>
     <option value="esi">Earth Similarity Mode</option>
     <option value="temp">Temperature Mode</option>
-    <option value="star">Stellar Classification Mode</option>
-    <option value="ghz">Galactic Habitable Zone View</option>
+    <option value="star">Stellar Blackbody Mode</option>
+    <option value="ghz">Galactic Habitable Zone Mode</option>
   </select>
 
   <div id="info">Click a planet to inspect.</div>
@@ -90,146 +90,166 @@ html, body {
 <canvas id="universe"></canvas>
 
 <div id="footer">
-  © 2025 Cornelius Aurelius ·
-  <a href="https://zenodo.org/records/17362534" target="_blank">The Peace License</a>
+  © 2025 Cornelius Aurelius · 
+  <a target="_blank" href="https://zenodo.org/records/17362534">The Peace License</a>
 </div>
 
 <script>
 /* ============================================================
-   OMNISCIENTRIX MAP vΩ.4
-   — Advanced Galactic Engine (Single File Edition)
+   OMNISCIENTRIX MAP vΩ.5 — Cinematic Blackbody Edition
+   All-in-one advanced galaxy engine (zero dependencies)
 ============================================================ */
 
 const canvas = document.getElementById("universe");
 const ctx = canvas.getContext("2d");
 let W, H;
 
+/* ===== RESIZE ===== */
 function resize() {
   canvas.width = W = window.innerWidth;
   canvas.height = H = window.innerHeight;
 }
-resize();
-window.onresize = resize;
+resize(); window.onresize = resize;
 
-/* =========================
-   CAMERA (3D)
-========================= */
+/* ===== CAMERA ===== */
 let cam = {
-  x: 0,
-  y: 0,
-  z: 1200,
+  x: 0, 
+  y: 0, 
+  z: 1600, 
   rot: 0,
   drag: false,
   lastX: 0,
   lastY: 0
 };
 
-canvas.addEventListener("mousedown", e => {
-  cam.drag = true;
-  cam.lastX = e.clientX;
-  cam.lastY = e.clientY;
+/* Pan */
+canvas.addEventListener("mousedown", e=>{
+  cam.drag=true;
+  cam.lastX=e.clientX;
+  cam.lastY=e.clientY;
 });
-canvas.addEventListener("mouseup", ()=> cam.drag = false);
-canvas.addEventListener("mouseleave", ()=> cam.drag = false);
+canvas.addEventListener("mouseup", ()=>cam.drag=false);
+canvas.addEventListener("mouseleave", ()=>cam.drag=false);
 
-canvas.addEventListener("mousemove", e => {
-  if (cam.drag) {
-    cam.x -= (e.clientX - cam.lastX)*1.2;
-    cam.y -= (e.clientY - cam.lastY)*1.2;
-    cam.lastX = e.clientX;
-    cam.lastY = e.clientY;
+canvas.addEventListener("mousemove", e=>{
+  if(cam.drag){
+    cam.x -= (e.clientX-cam.lastX)*1.3;
+    cam.y -= (e.clientY-cam.lastY)*1.3;
+    cam.lastX=e.clientX;
+    cam.lastY=e.clientY;
   }
 });
 
-/* Rotation (Shift + drag) */
-document.addEventListener("mousemove", e => {
-  if (cam.drag && e.shiftKey) {
-    cam.rot += (e.clientX - cam.lastX)*0.003;
+/* Rotate (Shift + drag) */
+canvas.addEventListener("mousemove", e=>{
+  if(cam.drag && e.shiftKey){
+    cam.rot += (e.clientX-cam.lastX)*0.003;
   }
 });
 
 /* Zoom */
-canvas.addEventListener("wheel", e => {
-  cam.z += e.deltaY * 0.5;
-  cam.z = Math.min(4000, Math.max(300, cam.z));
+canvas.addEventListener("wheel", e=>{
+  cam.z += e.deltaY * 0.7;
+  cam.z = Math.min(6000, Math.max(300, cam.z));
 });
 
-/* Right click resets */
-canvas.addEventListener("contextmenu", e => {
+/* Reset (right click) */
+canvas.addEventListener("contextmenu", e=>{
   e.preventDefault();
-  cam = {x:0,y:0,z:1200,rot:0,drag:false,lastX:0,lastY:0};
+  cam = {x:0, y:0, z:1600, rot:0, drag:false, lastX:0, lastY:0};
 });
 
-/* =========================
-   NEBULA BACKGROUND
-========================= */
-function drawNebula() {
-  let grad = ctx.createRadialGradient(W/2, H/2, 20, W/2, H/2, W*0.9);
-  grad.addColorStop(0, "rgba(0,40,120,0.3)");
-  grad.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,0,W,H);
-}
-
-/* =========================
-   DARK MATTER HALO
-========================= */
-function drawDarkMatterHalo() {
-  let g = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.8);
-  g.addColorStop(0, "rgba(80,0,120,0.08)");
+/* ============================================================
+   NEBULA + DARK MATTER HALO
+============================================================ */
+function drawNebula(){
+  let g = ctx.createRadialGradient(W/2, H/2, 20, W/2, H/2, W);
+  g.addColorStop(0, "rgba(0,60,150,0.25)");
   g.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = g;
   ctx.fillRect(0,0,W,H);
 }
 
-/* =========================
-   STARFIELD (30,000)
-========================= */
-const STAR_COUNT = 30000;
+function drawHalo(){
+  let g = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.85);
+  g.addColorStop(0, "rgba(120,0,200,0.08)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+}
+
+/* ============================================================
+   SPIRAL ARMS (true logarithmic structures)
+============================================================ */
+function spiralArms(x,y){
+  let a = 0.3;  
+  let b = 0.25; 
+  let r = Math.sqrt(x*x + y*y);
+  let theta = Math.atan2(y,x);
+  let arm = Math.cos(4*(theta - Math.log(r+1)*b));
+  return Math.max(0, arm);
+}
+
+/* ============================================================
+   STARFIELD (40,000 stars)
+============================================================ */
+const STAR_COUNT = 40000;
 let stars = [];
 
-for (let i=0; i<STAR_COUNT; i++) {
+for (let i=0;i<STAR_COUNT;i++){
+  /* Spiral-biased distribution */
+  let r = (Math.random()**0.5) * 18000;
+  let t = Math.random()*Math.PI*2;
+
+  let x = r * Math.cos(t);
+  let y = r * Math.sin(t);
+
+  /* boost density inside arms */
+  let weight = spiralArms(x,y);
+  if (Math.random() < weight*0.8) {
+    x *= 1 + (Math.random()-0.5)*0.1;
+    y *= 1 + (Math.random()-0.5)*0.1;
+  }
+
   stars.push({
-    x: (Math.random()-0.5)*20000,
-    y: (Math.random()-0.5)*20000,
-    z: (Math.random())*8000 + 200,
-    t: Math.random(), // type
-    b: 0.3 + Math.random()*0.7
+    x, y,
+    z: 200 + Math.random()*8000,
+    T: 2400 + Math.random()*26000, // Kelvin temperature
+    b: 0.4 + Math.random()*0.6
   });
 }
 
-/* Stellar Classification Palette */
-function starColor(t) {
-  if (t < 0.02) return `rgba(185,220,255,0.9)`; // O
-  if (t < 0.1)  return `rgba(145,180,255,0.9)`; // B
-  if (t < 0.3)  return `rgba(120,160,255,0.9)`; // A
-  if (t < 0.5)  return `rgba(255,255,220,0.9)`; // F/G
-  if (t < 0.7)  return `rgba(255,180,120,0.9)`; // K
-  return `rgba(255,110,60,0.9)`;                // M
+/* Blackbody star colours */
+function starColor(T){
+  if (T<3500) return `rgba(255,120,70,0.9)`;
+  if (T<5000) return `rgba(255,200,130,0.9)`;
+  if (T<6500) return `rgba(255,255,220,0.9)`;
+  if (T<10000) return `rgba(180,200,255,0.9)`;
+  return `rgba(150,180,255,0.9)`;
 }
 
-/* =========================
+/* ============================================================
    GHZ MODEL
-========================= */
-function ghz(x,y) {
-  const r=Math.sqrt(x*x+y*y);
-  const inner=5000, outer=11000;
+============================================================ */
+function ghz(x,y){
+  const r = Math.sqrt(x*x + y*y);
+  const inner = 6000, outer = 14000;
   if (r<inner || r>outer) return 0;
-  return 1 - Math.abs((r-(inner+outer)/2)/3000);
+  return 1 - Math.abs((r - (inner+outer)/2)/3500);
 }
 
-/* =========================
-   PROCEDURAL PLANETS (800)
-========================= */
+/* ============================================================
+   PROCEDURAL PLANETS (1,000)
+============================================================ */
 let planets=[];
-for(let i=0;i<800;i++){
-  let s=stars[Math.floor(Math.random()*stars.length)];
-  let dist=30+Math.random()*300;
+for(let i=0;i<1000;i++){
+  let s = stars[Math.floor(Math.random()*stars.length)];
+  let dist=50+Math.random()*600;
   let angle=Math.random()*Math.PI*2;
 
   let px = s.x + Math.cos(angle)*dist;
   let py = s.y + Math.sin(angle)*dist;
-  let pz = s.z + (Math.random()-0.5)*50;
+  let pz = s.z + (Math.random()-0.5)*150;
 
   let radius=0.5+Math.random()*2.5;
   let temp=150+Math.random()*400;
@@ -242,11 +262,10 @@ for(let i=0;i<800;i++){
   let co2=Math.random()*0.1;
 
   planets.push({
-    name:"PX-"+(1000+i),
+    name:"PX-"+(2000+i),
     x:px, y:py, z:pz,
     host:s,
-    angle,
-    dist,
+    angle, dist,
 
     radius,temp,flux,water,atmo,o2,ch4,co2,
 
@@ -255,102 +274,102 @@ for(let i=0;i<800;i++){
   });
 }
 
-/* =========================
-   SCORING SYSTEM
-========================= */
+/* ============================================================
+   SCORING (ESI + IELS + PLife)
+============================================================ */
 function ESI(p){
   const r=Math.abs((p.radius-1)/(p.radius+1));
   const t=Math.abs((p.temp-288)/(p.temp+288));
   return 1-(r*0.5+t*0.5);
 }
 function IELS(p){
-  let a=Math.exp(-Math.abs(p.temp-288)/90);
-  let b=p.water;
-  let c=p.atmo;
-  let d=Math.exp(-Math.abs(p.flux-1)/1.1);
-  return a*0.35+b*0.35+c*0.15+d*0.15;
+  let A=Math.exp(-Math.abs(p.temp-288)/90);
+  let B=p.water; 
+  let C=p.atmo; 
+  let D=Math.exp(-Math.abs(p.flux-1)/1.2);
+  return A*0.35 + B*0.35 + C*0.15 + D*0.15;
 }
 function life(p){
-  let bios=(p.o2*p.ch4)>0.0004 ? 1:0;
-  return p.iels*0.55+p.esi*0.35+bios*0.10;
+  let bios=(p.o2*p.ch4)>0.00035?1:0;
+  return p.iels*0.55 + p.esi*0.35 + bios*0.10;
 }
 
-/* Precompute */
 for(let p of planets){
   p.esi=ESI(p);
   p.iels=IELS(p);
   p.life=life(p);
 }
 
-/* =========================
-   MODE LOGIC
-========================= */
-let mode="life";
+/* ============================================================
+   MODE SELECTION
+============================================================ */
+let mode = "life";
 document.getElementById("modeSelect").onchange = e => mode=e.target.value;
 
-/* =========================
+/* ============================================================
    RENDER LOOP
-========================= */
+============================================================ */
 function render(){
   ctx.fillStyle="#000";
   ctx.fillRect(0,0,W,H);
 
   drawNebula();
-  drawDarkMatterHalo();
+  drawHalo();
 
-  /* Galaxy rotation */
-  cam.rot += 0.00005;
+  cam.rot += 0.000045;
   let cosR=Math.cos(cam.rot);
   let sinR=Math.sin(cam.rot);
 
-  /* ==== Draw Stars ==== */
+  /* ==== STARS ==== */
   for(let s of stars){
     let rx = s.x*cosR - s.y*sinR;
     let ry = s.x*sinR + s.y*cosR;
     let rz = s.z;
 
-    let d = rz / cam.z;
-    const x = W/2 + (rx - cam.x)*1.2/d;
-    const y = H/2 + (ry - cam.y)*1.2/d;
+    let d = rz/cam.z;
 
-    let C = starColor(s.t);
+    let X = W/2 + (rx - cam.x)*1.15/d;
+    let Y = H/2 + (ry - cam.y)*1.15/d;
+
+    let C = starColor(s.T);
     ctx.fillStyle = C;
-    ctx.fillRect(x,y,1.2,1.2);
+    ctx.fillRect(X,Y,1.2,1.2);
   }
 
-  /* ==== Planet Orbit Motion ==== */
+  /* ==== PLANET ORBITS ==== */
   for(let p of planets){
-    p.angle+=0.00022;
+    p.angle += 0.00020;
     p.x = p.host.x + Math.cos(p.angle)*p.dist;
     p.y = p.host.y + Math.sin(p.angle)*p.dist;
   }
 
-  /* ==== Draw Planets ==== */
+  /* ==== PLANETS ==== */
   for(let p of planets){
-    let rx=p.x*cosR - p.y*sinR;
-    let ry=p.x*sinR + p.y*cosR;
-    let rz=p.z;
+    let rx = p.x*cosR - p.y*sinR;
+    let ry = p.x*sinR + p.y*cosR;
+    let rz = p.z;
 
-    let d=rz/cam.z;
-    let x=W/2+(rx-cam.x)*1.2/d;
-    let y=H/2+(ry-cam.y)*1.2/d;
+    let d = rz/cam.z;
+    let X = W/2 + (rx - cam.x)*1.2/d;
+    let Y = H/2 + (ry - cam.y)*1.2/d;
 
     let C;
+
     switch(mode){
       case "life":
-        let L=p.life;
-        C=`rgb(${(1-L)*0}, ${150+L*105}, 255)`;
+        let L = p.life;
+        C = `rgba(${(1-L)*0},${150+L*105},255,1)`;
         break;
       case "esi":
-        let E=p.esi;
-        C=`rgb(${(1-E)*50}, ${E*255}, ${255-E*120})`;
+        let E = p.esi;
+        C = `rgba(${(1-E)*60},${E*255},${255-E*80},1)`;
         break;
       case "temp":
-        let T=Math.min(1,p.temp/600);
-        C=`rgb(${T*255}, ${(1-T)*255}, 255)`;
+        let T = Math.min(1,p.temp/600);
+        C = `rgba(${T*255}, ${(1-T)*255}, 255,1)`;
         break;
       case "star":
-        C=`rgb(80,180,255)`;
+        C = starColor(p.host.T);
         break;
       case "ghz":
         let G=ghz(p.x,p.y);
@@ -360,30 +379,33 @@ function render(){
 
     ctx.beginPath();
     ctx.fillStyle=C;
-    ctx.arc(x,y,3+p.life*4,0,Math.PI*2);
+    ctx.shadowBlur = 6+p.life*12;
+    ctx.shadowColor=C;
+    ctx.arc(X,Y,3+p.life*4,0,Math.PI*2);
     ctx.fill();
+    ctx.shadowBlur=0;
 
-    p.screen.x=x; 
-    p.screen.y=y;
+    p.screen.x=X; 
+    p.screen.y=Y;
   }
 
   requestAnimationFrame(render);
 }
 render();
 
-/* =========================
+/* ============================================================
    INSPECTOR
-========================= */
+============================================================ */
 canvas.addEventListener("click", e=>{
   for(let p of planets){
-    if(Math.hypot(e.clientX-p.screen.x, e.clientY-p.screen.y)<10){
+    if(Math.hypot(e.clientX-p.screen.x,e.clientY-p.screen.y)<10){
       document.getElementById("info").innerHTML=`
         <b>${p.name}</b><br><br>
         Radius: ${p.radius.toFixed(2)} R⊕<br>
         Temperature: ${p.temp.toFixed(0)} K<br>
         Flux: ${p.flux.toFixed(2)} F⊕<br><br>
         Earth Similarity Index: ${(p.esi*100).toFixed(1)}%<br>
-        Info Earth-Likeness: ${(p.iels*100).toFixed(1)}%<br>
+        IELS (Informational Earth-Likeness): ${(p.iels*100).toFixed(1)}%<br>
         Life Probability: ${(p.life*100).toFixed(1)}%<br><br>
         Water Content: ${(p.water*100).toFixed(1)}%<br>
         Atmosphere Strength: ${(p.atmo*100).toFixed(1)}%<br><br>
