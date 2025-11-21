@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Omniscientrix Universe Map vΩ.6</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+html,body{margin:0;padding:0;overflow:hidden;background:#000;color:#9ee7ff;font-family:Arial;}
+#uiPanel{
+ position:fixed;top:20px;left:20px;
+ background:rgba(0,20,40,0.55);border:1px solid #00d0ff55;
+ padding:15px;border-radius:14px;backdrop-filter:blur(8px);
+ color:#b9f2ff;max-width:260px;transition:0.3s;
+}
+#uiPanel h1{font-size:20px;margin:0 0 10px;color:#4ee6ff;text-shadow:0 0 6px #0099cc;}
+#toggleBtn{
+ position:fixed;top:20px;left:20px;
+ background:#003344aa;color:#9ee7ff;padding:8px 12px;border-radius:8px;
+ border:1px solid #0099cc;cursor:pointer;display:none;
+}
+canvas{display:block;}
+#footer{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);
+ font-size:12px;color:#00baff;}
+#footer a{color:#66e0ff;text-decoration:none;}
+</style>
+</head>
+<body>
+<div id="toggleBtn">Ω Menu</div>
+<div id="uiPanel">
+<h1>Ω Control Panel</h1>
+<label>Mode:</label>
+<select id="modeSel">
+<option value="life">Ω-Life Resonance</option>
+<option value="curv">Ω-Curvature</option>
+<option value="aware">Awareness Field</option>
+<option value="flux">Info Flux</option>
+<option value="ghz">GHZ Adaptive</option>
+<option value="star">Star Blackbody</option>
+</select>
+<br/><br/>
+<label>Ω-Intensity</label>
+<input type="range" id="omegaInt" min="0" max="1" step="0.01" value="0.5"/>
+<br/><br/>
+<label>Adaptive Engine</label>
+<input type="checkbox" id="adaptive" checked/> Enabled
+</div>
+
+<canvas id="universe"></canvas>
+
+<div id="footer">
+© 2025 Cornelius Aurelius · 
+<a href="https://corneliusaurelius.com/">Site</a> ·
+<a href="https://medium.com/@138licensing">Medium</a> ·
+<a href="mailto:138licensing@gmail.com">Email</a> ·
+<a href="https://zenodo.org/records/17362534">Zenodo</a> ·
+<a href="https://www.instagram.com/cornelius_aurelius_/">Instagram</a> ·
+<a href="https://www.linkedin.com/in/cornelius-aurelius-404805325/recent-activity/all/">LinkedIn</a>
+</div>
+
+<script>
+const canvas=document.getElementById("universe");
+const ctx=canvas.getContext("2d");
+let W,H;
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
+resize();addEventListener("resize",resize);
+
+let cam={x:0,y:0,z:1600,drag:false,lx:0,ly:0};
+canvas.addEventListener("mousedown",e=>{cam.drag=true;cam.lx=e.clientX;cam.ly=e.clientY;});
+addEventListener("mouseup",()=>cam.drag=false);
+canvas.addEventListener("mousemove",e=>{
+ if(cam.drag){
+  cam.x -= (e.clientX-cam.lx)*1.2;
+  cam.y -= (e.clientY-cam.ly)*1.2;
+  cam.lx=e.clientX;cam.ly=e.clientY;
+ }
+});
+canvas.addEventListener("wheel",e=>{
+ cam.z += e.deltaY*0.7;
+ cam.z=Math.max(300,Math.min(6000,cam.z));
+});
+
+// touch support
+let tId=null;
+canvas.addEventListener("touchstart",e=>{
+ if(e.touches.length===1){
+  tId=e.touches[0].identifier;
+  cam.drag=true;
+  cam.lx=e.touches[0].clientX;
+  cam.ly=e.touches[0].clientY;
+ }
+});
+canvas.addEventListener("touchmove",e=>{
+ for(const t of e.touches){
+  if(t.identifier===tId && cam.drag){
+   cam.x -= (t.clientX-cam.lx)*1.2;
+   cam.y -= (t.clientY-cam.ly)*1.2;
+   cam.lx=t.clientX;cam.ly=t.clientY;
+  }
+ }
+});
+canvas.addEventListener("touchend",e=>{cam.drag=false;tId=null;});
+
+// simple starfield
+let stars=[];
+for(let i=0;i<20000;i++){
+ stars.push({
+  x:(Math.random()-0.5)*30000,
+  y:(Math.random()-0.5)*30000,
+  z:200+Math.random()*8000,
+  t:2000+Math.random()*10000
+ });
+}
+
+function starColor(T){
+ if(T<3500)return"rgba(255,120,70,0.9)";
+ if(T<5000)return"rgba(255,200,130,0.9)";
+ if(T<6500)return"rgba(255,255,220,0.9)";
+ if(T<10000)return"rgba(180,200,255,0.9)";
+ return"rgba(150,180,255,0.9)";
+}
+
+const modeSel=document.getElementById("modeSel");
+const omegaInt=document.getElementById("omegaInt");
+const adaptive=document.getElementById("adaptive");
+
+function render(){
+ ctx.fillStyle="#000";ctx.fillRect(0,0,W,H);
+ let om=Number(omegaInt.value);
+ let mode=modeSel.value;
+ let adapt=adaptive.checked;
+
+ for(const s of stars){
+  let d=s.z/cam.z;
+  let X=W/2+(s.x-cam.x)*1.1/d;
+  let Y=H/2+(s.y-cam.y)*1.1/d;
+  if(mode==="curv"&&adapt){
+    // simple curvature glow
+    ctx.fillStyle=`rgba(0,${Math.floor(100+om*155)},255,${0.5*d})`;
+  }else{
+    ctx.fillStyle=starColor(s.t);
+  }
+  ctx.fillRect(X,Y,1.1,1.1);
+ }
+
+ requestAnimationFrame(render);
+}
+render();
+</script>
+
+</body>
+</html>
